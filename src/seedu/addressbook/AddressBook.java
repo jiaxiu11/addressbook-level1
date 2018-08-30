@@ -72,6 +72,7 @@ public class AddressBook {
     private static final String MESSAGE_COMMAND_HELP_PARAMETERS = "\tParameters: %1$s";
     private static final String MESSAGE_COMMAND_HELP_EXAMPLE = "\tExample: %1$s";
     private static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted Person: %1$s";
+    private static final String MESSAGE_UPDATE_PERSON_SUCCESS = "Updated Person: %1$s";
     private static final String MESSAGE_DISPLAY_PERSON_DATA = "%1$s  Phone Number: %2$s  Email: %3$s";
     private static final String MESSAGE_DISPLAY_LIST_ELEMENT_INDEX = "%1$d. ";
     private static final String MESSAGE_GOODBYE = "Exiting Address Book... Good bye!";
@@ -115,6 +116,15 @@ public class AddressBook {
     private static final String COMMAND_LIST_WORD = "list";
     private static final String COMMAND_LIST_DESC = "Displays all persons as a list with index numbers.";
     private static final String COMMAND_LIST_EXAMPLE = COMMAND_LIST_WORD;
+
+    private static final String COMMAND_UPDATE_WORD = "update";
+    private static final String COMMAND_UPDATE_DESC = "Updates a person identified by the index number used in "
+            + "the last find/list call.";
+    private static final String COMMAND_UPDATE_PARAMETER = "INDEX "
+                                                        + PERSON_DATA_PREFIX_PHONE + "PHONE_NUMBER "
+                                                        + PERSON_DATA_PREFIX_EMAIL + "EMAIL"
+                                                        + " or provide either phone or email for partial update";
+    private static final String COMMAND_UPDATE_EXAMPLE = COMMAND_UPDATE_WORD + " 1" + " p/123459";
 
     private static final String COMMAND_DELETE_WORD = "delete";
     private static final String COMMAND_DELETE_DESC = "Deletes a person identified by the index number used in "
@@ -380,6 +390,8 @@ public class AddressBook {
             return executeFindPersons(commandArgs);
         case COMMAND_LIST_WORD:
             return executeListAllPersonsInAddressBook();
+        case COMMAND_UPDATE_WORD:
+                return executeUpdatePerson(commandArgs);
         case COMMAND_DELETE_WORD:
             return executeDeletePerson(commandArgs);
         case COMMAND_CLEAR_WORD:
@@ -499,6 +511,102 @@ public class AddressBook {
     }
 
     /**
+     * Updates person identified using last displayed index.
+     *
+     * @param commandArgs full command args string from the user
+     * @return feedback display message for the operation result
+     */
+    private static String executeUpdatePerson(String commandArgs) {
+        if (!isUpdatePersonArgsValid(commandArgs)) {
+            //TODO: write the message for update
+            return getMessageForInvalidCommandInput(COMMAND_UPDATE_WORD, getUsageInfoForUpdateCommand());
+        }
+        final int targetVisibleIndex = extractTargetIndexFromUpdatePersonArgs(commandArgs);
+        if (!isDisplayIndexValidForLastPersonListingView(targetVisibleIndex)) {
+            return MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
+        }
+        final HashMap<PersonProperty, String> targetInModel = getPersonByLastVisibleIndex(targetVisibleIndex);
+        final Optional<HashMap<PersonProperty, String>> updatedModel = getUpdatedPerson(commandArgs, targetInModel);
+        if (!updatedModel.isPresent()) {
+            return getMessageForInvalidCommandInput(COMMAND_UPDATE_WORD, getUsageInfoForUpdateCommand());
+        }
+
+        return updatePersonFromAddressBook(targetVisibleIndex, updatedModel.get()) ? getMessageForSuccessfulUpdate(targetInModel,
+                updatedModel.get()) // success
+                : MESSAGE_PERSON_NOT_IN_ADDRESSBOOK; // not found
+    }
+
+    private static Optional<HashMap<PersonProperty, String>> getUpdatedPerson(String commandArgs,
+                                                                              HashMap<PersonProperty, String> originalPerson) {
+        if (isPersonDataExtractableFrom(commandArgs)) {
+            final HashMap<PersonProperty, String> updatedPerson = makePersonFromData(
+                    originalPerson.get(PersonProperty.NAME),
+                    extractPhoneFromPersonString(commandArgs),
+                    extractEmailFromPersonString(commandArgs)
+            );
+            return isPersonDataValid(updatedPerson) ? Optional.of(updatedPerson) : Optional.empty();
+        } else if (isUpdateDataExtractableFrom(commandArgs)) {
+            if (commandArgs.contains(PERSON_DATA_PREFIX_PHONE)) {
+                final HashMap<PersonProperty, String> updatedPerson = makePersonFromData(
+                        originalPerson.get(PersonProperty.NAME),
+                        extractPhoneFromPersonString(commandArgs),
+                        originalPerson.get(PersonProperty.EMAIL)
+                );
+                return isPersonDataValid(updatedPerson) ? Optional.of(updatedPerson) : Optional.empty();
+            } else if (commandArgs.contains(PERSON_DATA_PREFIX_EMAIL)) {
+                final HashMap<PersonProperty, String> updatedPerson = makePersonFromData(
+                        originalPerson.get(PersonProperty.NAME),
+                        originalPerson.get(PersonProperty.PHONE),
+                        extractEmailFromPersonString(commandArgs)
+                );
+                return isPersonDataValid(updatedPerson) ? Optional.of(updatedPerson) : Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
+
+
+    /**
+     * Returns true if email or phone can be extracted from the argument string, but not both.
+     * Format is [index] p/[phone] or [index] e/[email].
+     *
+     * @param personData person string representation
+     */
+    private static boolean isUpdateDataExtractableFrom(String personData) {
+        final String matchAnyPersonDataPrefix = PERSON_DATA_PREFIX_PHONE + '|' + PERSON_DATA_PREFIX_EMAIL;
+        final String[] splitArgs = personData.trim().split(matchAnyPersonDataPrefix);
+        return splitArgs.length == 2 // 3 arguments
+                && !splitArgs[0].isEmpty() // non-empty arguments
+                && !splitArgs[1].isEmpty();
+    }
+
+    /**
+     * Extracts the target's index from the raw update person args string
+     *
+     * @param rawArgs raw command args string for the delete person command
+     * @return extracted index
+     */
+    private static int extractTargetIndexFromUpdatePersonArgs(String rawArgs) {
+        int displayIndex = Character.getNumericValue(rawArgs.charAt(0));
+        return displayIndex;
+    }
+
+    /**
+     * Calls isDeletePersonArgsValid to check validity of update person argument string's format.
+     *
+     * @param rawArgs raw command args string for the delete person command
+     * @return whether the input args string is valid
+     */
+    private static boolean isUpdatePersonArgsValid(String rawArgs) {
+        try {
+            final int extractedIndex = Character.getNumericValue(rawArgs.charAt(0));
+            return extractedIndex >= DISPLAYED_INDEX_OFFSET;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+    /**
      * Deletes person identified using last displayed index.
      *
      * @param commandArgs full command args string from the user
@@ -561,6 +669,20 @@ public class AddressBook {
      */
     private static String getMessageForSuccessfulDelete(HashMap<PersonProperty, String> deletedPerson) {
         return String.format(MESSAGE_DELETE_PERSON_SUCCESS, getMessageForFormattedPersonData(deletedPerson));
+    }
+
+    /**
+     * Constructs a feedback message for a successful update person command execution.
+     *
+     * @see #executeDeletePerson(String)
+     * @param originalPerson successfully updated to
+     * @param newPerson
+     * @return successful update person feedback message
+     */
+    private static String getMessageForSuccessfulUpdate(HashMap<PersonProperty, String> originalPerson,
+                                                        HashMap<PersonProperty, String> newPerson) {
+        return String.format(MESSAGE_UPDATE_PERSON_SUCCESS, getMessageForFormattedPersonData(originalPerson)
+        + " to " + getMessageForFormattedPersonData(newPerson));
     }
 
     /**
@@ -804,6 +926,18 @@ public class AddressBook {
             savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
         }
         return changed;
+    }
+
+    private static boolean updatePersonFromAddressBook(int displayIndex, HashMap<PersonProperty, String> updatedPerson) {
+        int arrayIndex = displayIndex - DISPLAYED_INDEX_OFFSET;
+        try {
+            final HashMap<PersonProperty, String> originalPerson = ALL_PERSONS.get(arrayIndex);
+            ALL_PERSONS.set(arrayIndex, updatedPerson);
+            savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
+            return true;
+        } catch (IndexOutOfBoundsException ex) {
+            return false;
+        }
     }
 
     /**
@@ -1108,6 +1242,13 @@ public class AddressBook {
         return String.format(MESSAGE_COMMAND_HELP, COMMAND_FIND_WORD, COMMAND_FIND_DESC) + LS
                 + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_FIND_PARAMETERS) + LS
                 + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_FIND_EXAMPLE) + LS;
+    }
+
+    /** Returns the string for showing 'update' command usage instruction */
+    private static String getUsageInfoForUpdateCommand() {
+        return String.format(MESSAGE_COMMAND_HELP, COMMAND_UPDATE_WORD, COMMAND_UPDATE_DESC) + LS
+                + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_UPDATE_PARAMETER) + LS
+                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_UPDATE_EXAMPLE) + LS;
     }
 
     /** Returns the string for showing 'delete' command usage instruction */
