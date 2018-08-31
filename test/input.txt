@@ -92,6 +92,33 @@
   list
 
 ##########################################################
+# test delete person command
+##########################################################
+
+  # last active view: [1] betsy [2] charlie
+
+  # should catch invalid args format
+  update
+  update should be one number and either or both phone and email
+
+  # should catch invalid index
+  update -1 p/123
+  update 0 p/123
+  update 3 p/123
+
+  # updates correct person
+  update 1 p/123 e/e@e.e
+  list
+  update 1 p/567
+  list
+  update 1 e/a@a.a
+  list
+
+  # listing indexes get updated on next request
+  update 2 p/456
+  list
+
+##########################################################
 # test clear command
 ##########################################################
 

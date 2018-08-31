@@ -268,6 +268,69 @@
 || 
 || 2 persons found!
 || ===================================================
+|| Enter command: || [Command entered:  update]
+|| Invalid command format: update 
+|| update: Updates a person identified by the index number used in the last find/list call.
+|| 	Parameters: INDEX p/PHONE_NUMBER e/EMAIL or provide either phone or email for partial update
+|| 	Example: update 1 p/123459
+|| 
+|| ===================================================
+|| Enter command: || [Command entered:  update should be one number and either or both phone and email]
+|| The person index provided is invalid
+|| ===================================================
+|| Enter command: || [Command entered:  update -1 p/123]
+|| Invalid command format: update 
+|| update: Updates a person identified by the index number used in the last find/list call.
+|| 	Parameters: INDEX p/PHONE_NUMBER e/EMAIL or provide either phone or email for partial update
+|| 	Example: update 1 p/123459
+|| 
+|| ===================================================
+|| Enter command: || [Command entered:  update 0 p/123]
+|| Invalid command format: update 
+|| update: Updates a person identified by the index number used in the last find/list call.
+|| 	Parameters: INDEX p/PHONE_NUMBER e/EMAIL or provide either phone or email for partial update
+|| 	Example: update 1 p/123459
+|| 
+|| ===================================================
+|| Enter command: || [Command entered:  update 3 p/123]
+|| The person index provided is invalid
+|| ===================================================
+|| Enter command: || [Command entered:  update 1 p/123 e/e@e.e]
+|| Updated Person: Betsy Choo  Phone Number: 222222  Email: benchoo@nus.edu.sg to Betsy Choo  Phone Number: 123  Email: e@e.e
+|| ===================================================
+|| Enter command: || [Command entered:  list]
+|| 	1. Betsy Choo  Phone Number: 123  Email: e@e.e
+|| 	2. Dickson Ee  Phone Number: 444444  Email: dickson@nus.edu.sg
+|| 
+|| 2 persons found!
+|| ===================================================
+|| Enter command: || [Command entered:  update 1 p/567]
+|| Updated Person: Betsy Choo  Phone Number: 123  Email: e@e.e to Betsy Choo  Phone Number: 567  Email: e@e.e
+|| ===================================================
+|| Enter command: || [Command entered:  list]
+|| 	1. Betsy Choo  Phone Number: 567  Email: e@e.e
+|| 	2. Dickson Ee  Phone Number: 444444  Email: dickson@nus.edu.sg
+|| 
+|| 2 persons found!
+|| ===================================================
+|| Enter command: || [Command entered:  update 1 e/a@a.a]
+|| Updated Person: Betsy Choo  Phone Number: 567  Email: e@e.e to Betsy Choo  Phone Number: 567  Email: a@a.a
+|| ===================================================
+|| Enter command: || [Command entered:  list]
+|| 	1. Betsy Choo  Phone Number: 567  Email: a@a.a
+|| 	2. Dickson Ee  Phone Number: 444444  Email: dickson@nus.edu.sg
+|| 
+|| 2 persons found!
+|| ===================================================
+|| Enter command: || [Command entered:  update 2 p/456]
+|| Updated Person: Dickson Ee  Phone Number: 444444  Email: dickson@nus.edu.sg to Dickson Ee  Phone Number: 456  Email: dickson@nus.edu.sg
+|| ===================================================
+|| Enter command: || [Command entered:  list]
+|| 	1. Betsy Choo  Phone Number: 567  Email: a@a.a
+|| 	2. Dickson Ee  Phone Number: 456  Email: dickson@nus.edu.sg
+|| 
+|| 2 persons found!
+|| ===================================================
 || Enter command: || [Command entered:  clear]
 || Address book has been cleared!
 || ===================================================

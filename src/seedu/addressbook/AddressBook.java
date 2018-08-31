@@ -601,7 +601,7 @@ public class AddressBook {
         try {
             final int extractedIndex = Character.getNumericValue(rawArgs.charAt(0));
             return extractedIndex >= DISPLAYED_INDEX_OFFSET;
-        } catch (NumberFormatException nfe) {
+        } catch (NumberFormatException | StringIndexOutOfBoundsException ex) {
             return false;
         }
     }
